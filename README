@@ -1,0 +1,8 @@
+#Distributed Reddit Analyser
+##COMP523 Project
+##Authors
+Tony Chen
+Luke Barnett
+
+##Description
+Uses the combination of [storm](https://github.com/nathanmarz/storm) and AdaBoost to predict what [subreddit](http://reddit.com) a particular post has come from
