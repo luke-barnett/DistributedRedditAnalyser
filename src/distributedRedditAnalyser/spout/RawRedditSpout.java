@@ -9,6 +9,8 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie2;
@@ -49,7 +51,7 @@ public class RawRedditSpout extends BaseRichSpout {
 	 */
 	public RawRedditSpout(String subReddit){
 		SUBREDDIT = subReddit;
-		URL = "http://www.reddit.com/r/" + SUBREDDIT + "/new/.json?sort=new";
+		URL = "http://www.reddit.com/r/" + SUBREDDIT + "/new/.json?sort=new&limit=100";
 		QUEUE = new ArrayBlockingQueue<Post>(10000);
 	}
 
@@ -83,8 +85,32 @@ public class RawRedditSpout extends BaseRichSpout {
 			
 			DefaultHttpClient httpClient = new DefaultHttpClient(parameters);
 			//Reddit user: DistributedRedditAna
-			//TODO Work out how to get the cookie installed to get more than 25 at a time
-			//httpClient.getCookieStore().addCookie(new BasicClientCookie2("", ""));
+			//!!DO NOT!! Commit with the cookie value hard-coded !!DO NOT!!
+			httpClient.getCookieStore().addCookie(new BasicClientCookie2("reddit_first", ""));
+			
+			//Uncomment below in order to get the cookie value for above
+			
+			/*
+			HttpPost loginRequest = new HttpPost("https://ssl.reddit.com/api/login/DistributedRedditAna");
+			loginRequest.addHeader("user", "DistributedRedditAna");
+			//!!DO NOT!! Commit with the passwd value hard-coded !!DO NOT!!
+			loginRequest.addHeader("passwd", "");
+			loginRequest.addHeader("api_type", "json");
+			
+			ResponseHandler<String> loginResponseHandler = new BasicResponseHandler();
+			
+			try {
+				httpClient.execute(loginRequest, loginResponseHandler);
+				for(Cookie c : httpClient.getCookieStore().getCookies()){
+					System.out.println("==COOOKIE==");
+					System.out.println(c.getValue());
+					System.out.println("==COOOKIE==");
+				}
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}*/
+			
+			
 			
 			try {
 				
@@ -104,7 +130,8 @@ public class RawRedditSpout extends BaseRichSpout {
 						
 						JSONArray children = (JSONArray) wrappingObjectData.get("children");
 						
-						System.out.printf("There are %d children in %s\r\n", children.size(), getRequest.getURI().toString());
+						//Debugging line for testing limits
+						//System.out.printf("There are %d children in %s\r\n", children.size(), getRequest.getURI().toString());
 						
 						if(children.size() == 0)
 							break;
