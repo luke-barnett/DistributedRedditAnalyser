@@ -11,6 +11,7 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.cookie.BasicClientCookie2;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.CoreProtocolPNames;
@@ -48,7 +49,7 @@ public class RawRedditSpout extends BaseRichSpout {
 	 */
 	public RawRedditSpout(String subReddit){
 		SUBREDDIT = subReddit;
-		URL = "http://www.reddit.com/r/" + SUBREDDIT + "/new/.json";
+		URL = "http://www.reddit.com/r/" + SUBREDDIT + "/new/.json?sort=new";
 		QUEUE = new ArrayBlockingQueue<Post>(10000);
 	}
 
@@ -80,14 +81,17 @@ public class RawRedditSpout extends BaseRichSpout {
 			parameters.setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8192);
 			parameters.setParameter(CoreProtocolPNames.USER_AGENT, "DistributedRedditAnalyser /u/Technicolour/");
 			
-			HttpClient httpClient = new DefaultHttpClient(parameters);
+			DefaultHttpClient httpClient = new DefaultHttpClient(parameters);
+			//Reddit user: DistributedRedditAna
+			//TODO Work out how to get the cookie installed to get more than 25 at a time
+			//httpClient.getCookieStore().addCookie(new BasicClientCookie2("", ""));
 			
 			try {
 				
 				if(initialPull){
 					String lastItemId = "";
 					for(int i = 0; i < INITIAL_PAGE_COUNT; i++){
-						HttpGet getRequest = new HttpGet(URL + "?limit=100&after=" + lastItemId);
+						HttpGet getRequest = new HttpGet(URL + "&after=" + lastItemId);
 						ResponseHandler<String> responseHandler = new BasicResponseHandler();
 						
 						String responseBody = httpClient.execute(getRequest, responseHandler);
@@ -101,7 +105,6 @@ public class RawRedditSpout extends BaseRichSpout {
 						JSONArray children = (JSONArray) wrappingObjectData.get("children");
 						
 						System.out.printf("There are %d children in %s\r\n", children.size(), getRequest.getURI().toString());
-						System.out.println(wrappingObject);
 						
 						if(children.size() == 0)
 							break;
@@ -115,7 +118,6 @@ public class RawRedditSpout extends BaseRichSpout {
 						
 						if(i == 0){
 							latestTimestamp = ((Double) ((JSONObject)((JSONObject) children.get(0)).get("data")).get("created")).longValue();
-							System.out.println(latestTimestamp);
 						}
 						
 						//Rate limit
@@ -131,9 +133,6 @@ public class RawRedditSpout extends BaseRichSpout {
 		            
 					String responseBody = httpClient.execute(getRequest, responseHandler);
 					
-					System.out.println(getRequest.getURI());
-					System.out.println(responseBody);
-					
 					JSONParser parser= new JSONParser();
 					
 					JSONObject wrappingObject = (JSONObject) parser.parse(responseBody);
@@ -147,10 +146,11 @@ public class RawRedditSpout extends BaseRichSpout {
 							JSONObject childData = (JSONObject) ((JSONObject) c).get("data");
 							if(latestTimestamp < ((Double) childData.get("created")).longValue())
 								QUEUE.add(new Post((String) childData.get("title"), SUBREDDIT));
+							else
+								break; //We may as well break at this point as they are sorted
 						}
 						
 						latestTimestamp = ((Double) ((JSONObject)((JSONObject) children.get(0)).get("data")).get("created")).longValue();
-						System.out.println(latestTimestamp);
 					}
 				}
 			} catch (ClientProtocolException e) {
