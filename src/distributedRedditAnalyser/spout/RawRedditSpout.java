@@ -114,7 +114,7 @@ public class RawRedditSpout extends BaseRichSpout {
 							QUEUE.add(new Post((String) childData.get("title"), SUBREDDIT));
 						}
 						
-						lastItemId = (String) ((JSONObject) ((JSONObject) children.get(children.size() - 1)).get("data")).get("subreddit_id");
+						lastItemId = (String) wrappingObjectData.get("after");
 						
 						if(i == 0){
 							latestTimestamp = ((Double) ((JSONObject)((JSONObject) children.get(0)).get("data")).get("created")).longValue();
