@@ -9,3 +9,9 @@ Uses the combination of [storm] and AdaBoost to predict what [subreddit] a parti
 
 [storm]: https://github.com/nathanmarz/storm "Storm by Nathan Marz"
 [subreddit]; http://reddit.com "Reddit"
+
+## Dependancies
+
+Storm 0.7.2-rc1
+Apache HttpComponents 4.2
+json-simple 1.1.1
