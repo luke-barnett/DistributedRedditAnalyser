@@ -57,10 +57,10 @@ public class Main {
 		TopologyBuilder builder = new TopologyBuilder();
 		
 		//Add a spout for each sub-reddit
-		for(int i = 0; i < subreddits.size(); i++){
-			builder.setSpout("subreddit" + i, new RawRedditSpout(subreddits.get(i)));
+		for(String subreddit : subreddits){
+			builder.setSpout("raw" + subreddit, new RawRedditSpout(subreddit));
 			//At this stage we just print the tuples it creates
-			builder.setBolt("subreddit" + i + "printerbolt", new PrinterBolt()).shuffleGrouping("subreddit" + i);
+			builder.setBolt("raw" + subreddit + "printerbolt", new PrinterBolt()).shuffleGrouping("raw" + subreddit);
 		}
 		
 		//Create the configuration object
@@ -73,7 +73,7 @@ public class Main {
 		cluster.submitTopology("redditAnalyser", conf, builder.createTopology());
 		
 		//Give a timeout period
-		Utils.sleep(10000);
+		Utils.sleep(60000);
 		
 		//Close the cluster
 		cluster.shutdown();
