@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import distributedRedditAnalyser.bolt.PrinterBolt;
 import distributedRedditAnalyser.spout.RawRedditSpout;
+import distributedRedditAnalyser.spout.SimRedditSpout;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
@@ -18,7 +19,7 @@ import backtype.storm.utils.Utils;
  * Built against storm 0.7.2 (https://github.com/nathanmarz/storm/tree/0.7.2) (https://github.com/downloads/nathanmarz/storm/storm-0.7.2-rc1.zip)
  * 
  * @author Luke Barnett 1109967
- * @author Tony Chen
+ * @author Tony Chen 1111377
  *
  */
 public class Main {
@@ -58,6 +59,7 @@ public class Main {
 		
 		//Add a spout for each sub-reddit
 		for(String subreddit : subreddits){
+			//builder.setSpout("raw" + subreddit, new SimRedditSpout(subreddit));
 			builder.setSpout("raw" + subreddit, new RawRedditSpout(subreddit));
 			//At this stage we just print the tuples it creates
 			builder.setBolt("raw" + subreddit + "printerbolt", new PrinterBolt()).shuffleGrouping("raw" + subreddit);
@@ -73,7 +75,7 @@ public class Main {
 		cluster.submitTopology("redditAnalyser", conf, builder.createTopology());
 		
 		//Give a timeout period
-		Utils.sleep(60000);
+		Utils.sleep(600000);
 		
 		//Close the cluster
 		cluster.shutdown();

@@ -35,6 +35,10 @@ import backtype.storm.utils.Utils;
 
 public class RawRedditSpout extends BaseRichSpout {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private SpoutOutputCollector collector;
 	private Boolean initialPull = true;
 	private long latestTimestamp = Long.MIN_VALUE;
@@ -44,6 +48,7 @@ public class RawRedditSpout extends BaseRichSpout {
 	private final ArrayBlockingQueue<Post> QUEUE;
 	//The number of pages to fetch on the initial scrape
 	private final int INITIAL_PAGE_COUNT = 1;
+	private int count = 0;
 
 	/**
 	 * Creates a new raw reddit spout for the provided sub-reddit
@@ -84,40 +89,13 @@ public class RawRedditSpout extends BaseRichSpout {
 			parameters.setParameter(CoreProtocolPNames.USER_AGENT, "DistributedRedditAnalyser /u/Technicolour/");
 			
 			DefaultHttpClient httpClient = new DefaultHttpClient(parameters);
-			//Reddit user: DistributedRedditAna
-			//!!DO NOT!! Commit with the cookie value hard-coded !!DO NOT!!
-			httpClient.getCookieStore().addCookie(new BasicClientCookie2("reddit_first", ""));
-			
-			//Uncomment below in order to get the cookie value for above
-			
-			/*
-			HttpPost loginRequest = new HttpPost("https://ssl.reddit.com/api/login/DistributedRedditAna");
-			loginRequest.addHeader("user", "DistributedRedditAna");
-			//!!DO NOT!! Commit with the passwd value hard-coded !!DO NOT!!
-			loginRequest.addHeader("passwd", "");
-			loginRequest.addHeader("api_type", "json");
-			
-			ResponseHandler<String> loginResponseHandler = new BasicResponseHandler();
-			
-			try {
-				httpClient.execute(loginRequest, loginResponseHandler);
-				for(Cookie c : httpClient.getCookieStore().getCookies()){
-					System.out.println("==COOOKIE==");
-					System.out.println(c.getValue());
-					System.out.println("==COOOKIE==");
-				}
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}*/
-			
-			
-			
+	
 			try {
 				
 				if(initialPull){
 					String lastItemId = "";
 					for(int i = 0; i < INITIAL_PAGE_COUNT; i++){
-						HttpGet getRequest = new HttpGet(URL + "&after=" + lastItemId);
+						HttpGet getRequest = new HttpGet(URL +"&count=" + count + "&after=" + lastItemId);
 						ResponseHandler<String> responseHandler = new BasicResponseHandler();
 						
 						String responseBody = httpClient.execute(getRequest, responseHandler);
@@ -136,8 +114,9 @@ public class RawRedditSpout extends BaseRichSpout {
 						if(children.size() == 0)
 							break;
 						
-						for(Object c : children){
-							JSONObject childData = (JSONObject) ((JSONObject) c).get("data");
+						//reverse order so printed order is consistent
+						for(int c=children.size()-1; c>=0; c--){
+							JSONObject childData = (JSONObject) ((JSONObject) children.get(c)).get("data");
 							QUEUE.add(new Post((String) childData.get("title"), SUBREDDIT));
 						}
 						
@@ -150,6 +129,7 @@ public class RawRedditSpout extends BaseRichSpout {
 						//Rate limit
 						if(i != INITIAL_PAGE_COUNT - 1)
 							Utils.sleep(1000);
+						count += 100;
 					}
 					initialPull = false;
 				}else{
@@ -169,25 +149,22 @@ public class RawRedditSpout extends BaseRichSpout {
 					JSONArray children = (JSONArray) wrappingObjectData.get("children");
 					
 					if(children.size() > 0){
-						for(Object c : children){
-							JSONObject childData = (JSONObject) ((JSONObject) c).get("data");
+						//reverse order so it is an actual stream
+						for(int c=children.size()-1; c>=0; c--){
+							JSONObject childData = (JSONObject) ((JSONObject) children.get(c)).get("data");
 							if(latestTimestamp < ((Double) childData.get("created")).longValue())
 								QUEUE.add(new Post((String) childData.get("title"), SUBREDDIT));
-							else
-								break; //We may as well break at this point as they are sorted
 						}
+						
 						
 						latestTimestamp = ((Double) ((JSONObject)((JSONObject) children.get(0)).get("data")).get("created")).longValue();
 					}
 				}
 			} catch (ClientProtocolException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (ParseException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} finally {
 				httpClient.getConnectionManager().shutdown();
