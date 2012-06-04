@@ -2,6 +2,7 @@ package distributedRedditAnalyser;
 
 import java.util.ArrayList;
 
+import distributedRedditAnalyser.bolt.InstanceBolt;
 import distributedRedditAnalyser.bolt.PrinterBolt;
 import distributedRedditAnalyser.spout.RawRedditSpout;
 import distributedRedditAnalyser.spout.SimRedditSpout;
@@ -62,7 +63,7 @@ public class Main {
 			//builder.setSpout("raw" + subreddit, new SimRedditSpout(subreddit));
 			builder.setSpout("raw" + subreddit, new RawRedditSpout(subreddit));
 			//At this stage we just print the tuples it creates
-			builder.setBolt("raw" + subreddit + "printerbolt", new PrinterBolt()).shuffleGrouping("raw" + subreddit);
+			builder.setBolt("raw" + subreddit + "printerbolt", new InstanceBolt()).shuffleGrouping("raw" + subreddit);
 		}
 		
 		//Create the configuration object
