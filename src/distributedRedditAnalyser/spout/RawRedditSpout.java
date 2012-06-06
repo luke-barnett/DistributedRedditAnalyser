@@ -33,12 +33,16 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
+/**
+ * Directly interfaces with the Reddit API to create a raw stream of reddit posts
+ * 
+ * @author Luke Barnett 1109967
+ * @author Tony Chen 1111377
+ *
+ */
 public class RawRedditSpout extends BaseRichSpout {
 	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -4867266218997902575L;
 	private SpoutOutputCollector collector;
 	private Boolean initialPull = true;
 	private long latestTimestamp = Long.MIN_VALUE;

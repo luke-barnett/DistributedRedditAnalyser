@@ -31,7 +31,7 @@ import backtype.storm.utils.Utils;
  * keep scraping until we shutdown, used for creating arrf files
  * to simulate a stream situation if we cannot use the stream directly
  * 
- * @author tony
+ * @author Tony Chen 1111377
  *
  */
 public class SimRedditSpout extends BaseRichSpout{

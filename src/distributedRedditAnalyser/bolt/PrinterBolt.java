@@ -14,10 +14,7 @@ import backtype.storm.tuple.Tuple;
  */
 public class PrinterBolt extends BaseBasicBolt {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -2245664448752984871L;
 
 	@Override
     public void execute(Tuple tuple, BasicOutputCollector collector) {

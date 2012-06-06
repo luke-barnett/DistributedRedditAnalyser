@@ -24,12 +24,20 @@ import backtype.storm.tuple.Values;
  * bolt that collects stream tuples and turns them into an instance object
  * so they are can be processed by weka and moa classes
  * 
- * @author tony
- *
+ * @author Tony Chen 1111377
+ * @author Luke Barnett 1109967
+ * 
  */
 public class InstanceBolt extends BaseRichBolt {
+
+	private static final long serialVersionUID = -290300387298901098L;
 	private OutputCollector _collector;
 	private Instances instHeaders;
+	private final List<String> NOMINAL_CLASS_VALUES;
+	
+	public InstanceBolt(List<String> nominalClassValues){
+		NOMINAL_CLASS_VALUES = nominalClassValues;
+	}
 
 
 	@Override
@@ -43,7 +51,7 @@ public class InstanceBolt extends BaseRichBolt {
 		_collector = collector;
 		ArrayList<Attribute> att = new ArrayList<Attribute>();
 		att.add(new Attribute("title", (List<String>)null, 0));
-		att.add(new Attribute("redditClass", (List<String>)null, 1));
+		att.add(new Attribute("redditClass", NOMINAL_CLASS_VALUES, 1));
 		instHeaders = new Instances("reddit",att, 10);
 		instHeaders.setClassIndex(1);
 	}
