@@ -8,11 +8,13 @@ import weka.core.Instances;
 
 import distributedRedditAnalyser.bolt.InstanceBolt;
 import distributedRedditAnalyser.bolt.PrinterBolt;
+import distributedRedditAnalyser.bolt.StringToWordVectorBolt;
 import distributedRedditAnalyser.spout.RawRedditSpout;
 import distributedRedditAnalyser.spout.SimRedditSpout;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
+import backtype.storm.topology.BoltDeclarer;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.utils.Utils;
 
@@ -75,8 +77,17 @@ public class Main {
 			builder.setSpout("raw" + subreddit, new RawRedditSpout(subreddit));
 			//At this stage we just print the tuples it creates
 			builder.setBolt(subreddit + "instancebolt", new InstanceBolt(instHeaders)).shuffleGrouping("raw" + subreddit);
-			builder.setBolt(subreddit + "printerbolt", new PrinterBolt()).shuffleGrouping(subreddit + "instancebolt");
 		}
+		
+		BoltDeclarer wordToStringVectorBolt = builder.setBolt("stringToWord", new StringToWordVectorBolt(10, 40, instHeaders));
+		BoltDeclarer printerBolt = builder.setBolt("printerBolt", new PrinterBolt());
+		
+		for(String subreddit: subreddits){
+			printerBolt.shuffleGrouping(subreddit + "instancebolt"); //Comment me out for sanity
+			wordToStringVectorBolt.shuffleGrouping(subreddit + "instancebolt");
+		}
+		
+		printerBolt.shuffleGrouping("stringToWord");
 		
 		//Create the configuration object
 		Config conf = new Config();

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Semaphore;
 
+import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.filters.Filter;
@@ -68,8 +69,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 
 	@Override
 	public void execute(Tuple input) {
-		Instance inst = (Instance) input;
-		collector.ack(input);
+		DenseInstance inst = (DenseInstance) input.getValue(0);
 		
 		try {
 			semaphore.acquire();
@@ -137,10 +137,8 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 			}
 		}
 		
-		
-		
+		collector.ack(input);
 		semaphore.release();
-		
 	}
 
 }
