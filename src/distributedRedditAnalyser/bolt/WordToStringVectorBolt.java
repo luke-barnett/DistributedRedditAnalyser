@@ -2,6 +2,7 @@ package distributedRedditAnalyser.bolt;
 
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Semaphore;
 
 import weka.core.Instance;
 import weka.filters.unsupervised.attribute.StringToWordVector;
@@ -28,6 +29,7 @@ public class WordToStringVectorBolt extends BaseRichBolt{
 	private final int MAX_NUMBER_OF_WORDS_TO_KEEP;
 	private final ArrayBlockingQueue<Instance> BATCH_QUEUE;
 	private OutputCollector collector;
+	private Semaphore semaphore;
 	
 	public WordToStringVectorBolt(int batchSize, int maxNumberOfWordsToKeep){
 		if(batchSize < 1){
@@ -40,6 +42,7 @@ public class WordToStringVectorBolt extends BaseRichBolt{
 		MAX_NUMBER_OF_WORDS_TO_KEEP = maxNumberOfWordsToKeep;
 		BATCH_SIZE = batchSize;
 		BATCH_QUEUE = new ArrayBlockingQueue<Instance>(BATCH_SIZE);
+		semaphore = new Semaphore(1);
 	}
 
 	@Override
@@ -60,14 +63,27 @@ public class WordToStringVectorBolt extends BaseRichBolt{
 		BATCH_QUEUE.add((Instance) input);
 		collector.ack(input);
 		
-		if(BATCH_QUEUE.size() == BATCH_SIZE){
-			//Once the queue is of size create the vector
-			StringToWordVector vectorCreator = new StringToWordVector(MAX_NUMBER_OF_WORDS_TO_KEEP);
-			//TODO DO THINGS
-			//WARNING This probably isn't thread safe
-			//Empty Queue
-			BATCH_QUEUE.clear();
+		try {
+			//This should make it thread safe
+			semaphore.acquire();
+			
+			if(BATCH_QUEUE.size() == BATCH_SIZE){
+				//Once the queue is of size create the vector
+				StringToWordVector vectorCreator = new StringToWordVector(MAX_NUMBER_OF_WORDS_TO_KEEP);
+				//TODO DO THINGS
+				
+				//Empty Queue
+				BATCH_QUEUE.clear();
+			}
+			
+		} catch (InterruptedException e) {
+			System.err.println(e);
+		} finally {
+			semaphore.release();
 		}
+		
+		
+		
 	}
 
 }
