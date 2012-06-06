@@ -16,6 +16,8 @@ Dependancies
 Storm 0.7.2-rc1
 Apache HttpComponents 4.2
 json-simple 1.1.1
+Moa 20120301
+Weka 3.7.6
 
   [1]: https://github.com/nathanmarz/storm "Storm by Nathan Marz"
   [2]: http://reddit.com "Reddit"
