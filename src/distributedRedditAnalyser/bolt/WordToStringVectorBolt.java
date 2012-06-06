@@ -64,7 +64,7 @@ public class WordToStringVectorBolt extends BaseRichBolt{
 			//Once the queue is of size create the vector
 			StringToWordVector vectorCreator = new StringToWordVector(MAX_NUMBER_OF_WORDS_TO_KEEP);
 			//TODO DO THINGS
-			
+			//WARNING This probably isn't thread safe
 			//Empty Queue
 			BATCH_QUEUE.clear();
 		}
