@@ -25,7 +25,7 @@ import backtype.storm.tuple.Values;
  * @author Luke Barnett 1109967
  *
  */
-public class WordToStringVectorBolt extends BaseRichBolt{
+public class StringToWordVectorBolt extends BaseRichBolt{
 
 	private static final long serialVersionUID = -7494062164103601417L;
 	private final int BATCH_SIZE;
@@ -37,7 +37,7 @@ public class WordToStringVectorBolt extends BaseRichBolt{
 	private Filter filter;
 	private Boolean training = true;
 	
-	public WordToStringVectorBolt(int batchSize, int maxNumberOfWordsToKeep, Instances instHeaders){
+	public StringToWordVectorBolt(int batchSize, int maxNumberOfWordsToKeep, Instances instHeaders){
 		if(batchSize < 1){
 			throw new IllegalArgumentException("Batch Size is less than 1");
 		}
