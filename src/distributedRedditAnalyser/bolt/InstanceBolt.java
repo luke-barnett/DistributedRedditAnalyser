@@ -65,6 +65,7 @@ public class InstanceBolt extends BaseRichBolt {
 		inst.setValue(1, newPost.getSubReddit());
 		//emit these to a new bolt that collects instances
 		_collector.emit(new Values(inst));
+		_collector.ack(input);
 	}
 
 }
