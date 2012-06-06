@@ -90,6 +90,9 @@ public class Main {
 		//Give a timeout period
 		Utils.sleep(600000);
 		
+		//Kill the topology first
+		cluster.killTopology("redditAnalyser");
+		
 		//Close the cluster
 		cluster.shutdown();
 		
