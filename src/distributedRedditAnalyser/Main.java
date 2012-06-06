@@ -1,6 +1,10 @@
 package distributedRedditAnalyser;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import weka.core.Attribute;
+import weka.core.Instances;
 
 import distributedRedditAnalyser.bolt.InstanceBolt;
 import distributedRedditAnalyser.bolt.PrinterBolt;
@@ -50,6 +54,13 @@ public class Main {
 			subreddits.add(args[i]);
 		}
 		
+		//Build the Instances Header
+		ArrayList<Attribute> att = new ArrayList<Attribute>();
+		att.add(new Attribute("title", (List<String>)null, 0));
+		att.add(new Attribute("redditClass", subreddits, 1));
+		Instances instHeaders = new Instances("reddit",att, 10);
+		instHeaders.setClassIndex(1);
+		
 		/**
 		 * Start building the topology
 		 * Examples can be found at: https://github.com/nathanmarz/storm-starter
@@ -63,7 +74,7 @@ public class Main {
 			//builder.setSpout("raw" + subreddit, new SimRedditSpout(subreddit));
 			builder.setSpout("raw" + subreddit, new RawRedditSpout(subreddit));
 			//At this stage we just print the tuples it creates
-			builder.setBolt(subreddit + "instancebolt", new InstanceBolt(subreddits)).shuffleGrouping("raw" + subreddit);
+			builder.setBolt(subreddit + "instancebolt", new InstanceBolt(instHeaders)).shuffleGrouping("raw" + subreddit);
 			builder.setBolt(subreddit + "printerbolt", new PrinterBolt()).shuffleGrouping(subreddit + "instancebolt");
 		}
 		

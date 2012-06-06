@@ -32,11 +32,10 @@ public class InstanceBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = -290300387298901098L;
 	private OutputCollector _collector;
-	private Instances instHeaders;
-	private final List<String> NOMINAL_CLASS_VALUES;
+	private final Instances INST_HEADERS;
 	
-	public InstanceBolt(List<String> nominalClassValues){
-		NOMINAL_CLASS_VALUES = nominalClassValues;
+	public InstanceBolt(Instances instHeaders){
+		INST_HEADERS = instHeaders;
 	}
 
 
@@ -49,18 +48,13 @@ public class InstanceBolt extends BaseRichBolt {
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
 		_collector = collector;
-		ArrayList<Attribute> att = new ArrayList<Attribute>();
-		att.add(new Attribute("title", (List<String>)null, 0));
-		att.add(new Attribute("redditClass", NOMINAL_CLASS_VALUES, 1));
-		instHeaders = new Instances("reddit",att, 10);
-		instHeaders.setClassIndex(1);
 	}
 
 	@Override
 	public void execute(Tuple input) {
 		Post newPost = (Post)input.getValue(0);
 		Instance inst = new DenseInstance(2);
-		inst.setDataset(instHeaders);
+		inst.setDataset(INST_HEADERS);
 		inst.setValue(0, newPost.getTitle());
 		inst.setValue(1, newPost.getSubReddit());
 		//emit these to a new bolt that collects instances
