@@ -15,6 +15,7 @@ import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.topology.base.BaseRichBolt;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
@@ -33,8 +34,7 @@ public class InstanceBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		// TODO Auto-generated method stub
-		
+		declarer.declare(new Fields("redditInstance"));
 	}
 
 	@Override
@@ -57,8 +57,6 @@ public class InstanceBolt extends BaseRichBolt {
 		inst.setValue(1, newPost.getSubReddit());
 		//emit these to a new bolt that collects instances
 		_collector.emit(new Values(inst));
-		System.out.println(newPost.getSubReddit() + "\t" + newPost.getTitle());
-		
 	}
 
 }

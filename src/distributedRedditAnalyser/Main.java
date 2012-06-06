@@ -63,7 +63,8 @@ public class Main {
 			//builder.setSpout("raw" + subreddit, new SimRedditSpout(subreddit));
 			builder.setSpout("raw" + subreddit, new RawRedditSpout(subreddit));
 			//At this stage we just print the tuples it creates
-			builder.setBolt("raw" + subreddit + "printerbolt", new InstanceBolt()).shuffleGrouping("raw" + subreddit);
+			builder.setBolt(subreddit + "instancebolt", new InstanceBolt()).shuffleGrouping("raw" + subreddit);
+			builder.setBolt(subreddit + "printerbolt", new PrinterBolt()).shuffleGrouping(subreddit + "instancebolt");
 		}
 		
 		//Create the configuration object
