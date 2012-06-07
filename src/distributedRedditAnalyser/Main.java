@@ -76,18 +76,19 @@ public class Main {
 			//builder.setSpout("raw" + subreddit, new SimRedditSpout(subreddit));
 			builder.setSpout("raw" + subreddit, new RawRedditSpout(subreddit));
 			//At this stage we just print the tuples it creates
-			builder.setBolt(subreddit + "instancebolt", new InstanceBolt(instHeaders)).shuffleGrouping("raw" + subreddit);
+			//builder.setBolt(subreddit + "instancebolt", new InstanceBolt(instHeaders)).shuffleGrouping("raw" + subreddit);
 		}
 		
-		BoltDeclarer wordToStringVectorBolt = builder.setBolt("stringToWord", new StringToWordVectorBolt(10, 40, instHeaders));
-		BoltDeclarer printerBolt = builder.setBolt("printerBolt", new PrinterBolt());
+		BoltDeclarer instanceBolt = builder.setBolt("instancebolt", new InstanceBolt(instHeaders));
 		
 		for(String subreddit: subreddits){
-			printerBolt.shuffleGrouping(subreddit + "instancebolt"); //Comment me out for sanity
-			wordToStringVectorBolt.shuffleGrouping(subreddit + "instancebolt");
+			instanceBolt.shuffleGrouping("raw" + subreddit);
 		}
 		
-		printerBolt.shuffleGrouping("stringToWord");
+		builder.setBolt("stringToWord", new StringToWordVectorBolt(10, 40, instHeaders)).shuffleGrouping("instancebolt");
+		
+		
+		builder.setBolt("printerBolt", new PrinterBolt()).shuffleGrouping("instancebolt").shuffleGrouping("stringToWord");
 		
 		//Create the configuration object
 		Config conf = new Config();
