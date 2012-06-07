@@ -31,7 +31,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 	private static final long serialVersionUID = -7494062164103601417L;
 	private final int BATCH_SIZE;
 	private final int MAX_NUMBER_OF_WORDS_TO_KEEP;
-	private final Instances INST_HEADERS;
+	private Instances INST_HEADERS;
 	private final ArrayBlockingQueue<Instance> BATCH_QUEUE;
 	private OutputCollector collector;
 	private Semaphore semaphore;
@@ -70,6 +70,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 	@Override
 	public void execute(Tuple input) {
 		DenseInstance inst = (DenseInstance) input.getValue(0);
+		INST_HEADERS = inst.dataset();
 		
 		try {
 			semaphore.acquire();
@@ -107,7 +108,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 						collector.emit(new Values(i));
 					}*/
 					
-					filter.input(inst);
+					System.out.println("Filtered successfully? " + filter.input(inst));
 					
 					Instance filteredValue;
 					while((filteredValue = filter.output()) != null){
