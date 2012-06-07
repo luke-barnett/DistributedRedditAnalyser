@@ -51,7 +51,7 @@ public class RawRedditSpout extends BaseRichSpout {
 	private final String URL;
 	private final ArrayBlockingQueue<Post> QUEUE;
 	//The number of pages to fetch on the initial scrape
-	private final int INITIAL_PAGE_COUNT = 1;
+	private final int INITIAL_PAGE_COUNT = 5;
 	private int count = 0;
 
 	/**
@@ -138,7 +138,7 @@ public class RawRedditSpout extends BaseRichSpout {
 					initialPull = false;
 				}else{
 					//Rate limit for the API (pages are cached for 30 seconds)
-					Utils.sleep(30000);
+					Utils.sleep(10000);
 					HttpGet getRequest = new HttpGet(URL);
 					ResponseHandler<String> responseHandler = new BasicResponseHandler();
 		            
@@ -159,8 +159,6 @@ public class RawRedditSpout extends BaseRichSpout {
 							if(latestTimestamp < ((Double) childData.get("created")).longValue())
 								QUEUE.add(new Post((String) childData.get("title"), SUBREDDIT));
 						}
-						
-						
 						latestTimestamp = ((Double) ((JSONObject)((JSONObject) children.get(0)).get("data")).get("created")).longValue();
 					}
 				}

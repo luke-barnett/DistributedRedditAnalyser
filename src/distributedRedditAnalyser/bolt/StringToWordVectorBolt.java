@@ -93,22 +93,10 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 					}
 					
 					filter.setInputFormat(data);
-					
-					/*
-					 * TODO 
-					 * I think this is needed information and that we should emit the instances?
-					 * Isn't it the filtered values of the training data? Which we should be using?
-					 * Maybe the output() loop will fix that anyway?
-					 */
-					
-					/*Instances filteredData = */
+
 					Filter.useFilter(data, filter);
 					
-					/*for(Instance i : filteredData){
-						collector.emit(new Values(i));
-					}*/
-					
-					System.out.println("Filtered successfully? " + filter.input(inst));
+					filter.input(inst);
 					
 					Instance filteredValue;
 					while((filteredValue = filter.output()) != null){

@@ -85,10 +85,10 @@ public class Main {
 			instanceBolt.shuffleGrouping("raw" + subreddit);
 		}
 		
-		builder.setBolt("stringToWord", new StringToWordVectorBolt(10, 40, instHeaders)).shuffleGrouping("instancebolt");
+		builder.setBolt("stringToWord", new StringToWordVectorBolt(200, 80, instHeaders)).shuffleGrouping("instancebolt");
 		
 		
-		builder.setBolt("printerBolt", new PrinterBolt()).shuffleGrouping("instancebolt").shuffleGrouping("stringToWord");
+		builder.setBolt("printerBolt", new PrinterBolt()).shuffleGrouping("stringToWord");
 		
 		//Create the configuration object
 		Config conf = new Config();
