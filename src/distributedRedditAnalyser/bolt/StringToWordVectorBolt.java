@@ -94,7 +94,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 					
 					filter.setInputFormat(data);
 
-					Filter.useFilter(data, filter);
+					collector.emit(new Values(Filter.useFilter(data, filter)));
 					
 					filter.input(inst);
 					

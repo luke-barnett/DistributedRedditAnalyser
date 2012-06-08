@@ -7,7 +7,9 @@ import weka.core.Attribute;
 import weka.core.Instances;
 
 import distributedRedditAnalyser.bolt.InstanceBolt;
+import distributedRedditAnalyser.bolt.OzaBoostBolt;
 import distributedRedditAnalyser.bolt.PrinterBolt;
+import distributedRedditAnalyser.bolt.StatisticsBolt;
 import distributedRedditAnalyser.bolt.StringToWordVectorBolt;
 import distributedRedditAnalyser.spout.RawRedditSpout;
 import distributedRedditAnalyser.spout.SimRedditSpout;
@@ -83,7 +85,15 @@ public class Main {
 			stringToWordVectorBolt.shuffleGrouping("instancebolt:" + subreddit);
 		}
 		
-		builder.setBolt("printerBolt", new PrinterBolt()).shuffleGrouping("stringToWordBolt");
+		//NaiveBayesMultinomial
+		builder.setBolt("ozaBoostBolt:naiveBayesMultinomial", new OzaBoostBolt("bayes.NaiveBayesMultinomial")).shuffleGrouping("stringToWordBolt");
+		builder.setBolt("naiveBayesMultinomialStatistics", new StatisticsBolt(subreddits.size(),50)).shuffleGrouping("ozaBoostBolt:naiveBayesMultinomial");
+		
+		//NaiveBayes
+		builder.setBolt("ozaBoostBolt:naiveBayes", new OzaBoostBolt("bayes.NaiveBayes")).shuffleGrouping("stringToWordBolt");
+		builder.setBolt("naiveBayesStatistics", new StatisticsBolt(subreddits.size(),50)).shuffleGrouping("ozaBoostBolt:naiveBayes");
+		
+		builder.setBolt("printerBolt", new PrinterBolt()).shuffleGrouping("naiveBayesMultinomialStatistics").shuffleGrouping("naiveBayesStatistics");
 		
 		//Create the configuration object
 		Config conf = new Config();
