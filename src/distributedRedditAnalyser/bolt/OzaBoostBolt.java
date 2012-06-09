@@ -49,8 +49,8 @@ public class OzaBoostBolt extends BaseRichBolt {
 			classifier.resetLearningImpl();
 		}else{
 			SparseInstance inst = (SparseInstance) obj;
-			//Emit the predicted value and the correct value
-			collector.emit(new Values(classifier.correctlyClassifies(inst), inst.classValue()));
+			//Emit the entire prediction array and the correct value
+			collector.emit(new Values(classifier.getVotesForInstance(inst), inst.classValue()));
 			//Train on instance
 			classifier.trainOnInstanceImpl(inst);
 		}
@@ -59,7 +59,7 @@ public class OzaBoostBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("correctlyPredicted","actualClass"));
+		declarer.declare(new Fields("votesForInstance","actualClass"));
 	}
 
 }

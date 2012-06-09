@@ -37,7 +37,6 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 	private Semaphore semaphore;
 	private Filter filter;
 	private Boolean training = true;
-	
 	public StringToWordVectorBolt(int batchSize, int maxNumberOfWordsToKeep, Instances instHeaders){
 		if(batchSize < 1){
 			throw new IllegalArgumentException("Batch Size is less than 1");
@@ -93,14 +92,11 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 					}
 					
 					filter.setInputFormat(data);
-
-					collector.emit(new Values(Filter.useFilter(data, filter)));
 					
-					filter.input(inst);
-					
-					Instance filteredValue;
-					while((filteredValue = filter.output()) != null){
-						collector.emit(new Values(filteredValue));
+					//emit the instances used to train the filter
+					Instances filter_training_set = Filter.useFilter(data, filter);
+					for(int i=0; i<filter_training_set.numInstances(); i++){
+						collector.emit(new Values(filter_training_set.get(i)));
 					}
 					
 					training = false;
@@ -116,7 +112,6 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 			try {
 				filter.input(inst);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			

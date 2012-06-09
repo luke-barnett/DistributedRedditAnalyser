@@ -51,7 +51,7 @@ public class RawRedditSpout extends BaseRichSpout {
 	private final String URL;
 	private final ArrayBlockingQueue<Post> QUEUE;
 	//The number of pages to fetch on the initial scrape
-	private final int INITIAL_PAGE_COUNT = 5;
+	private final int INITIAL_PAGE_COUNT = 1;
 	private int count = 0;
 
 	/**
