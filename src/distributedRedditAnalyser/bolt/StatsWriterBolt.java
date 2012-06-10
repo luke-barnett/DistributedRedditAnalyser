@@ -25,7 +25,7 @@ public class StatsWriterBolt extends BaseRichBolt {
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
 		try {
-			writer = new FileWriter("results.csv");
+			writer = new FileWriter(String.format("results%s.csv", System.currentTimeMillis()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

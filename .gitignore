@@ -32,3 +32,6 @@ local.properties
 *.jar
 *.war
 *.ear
+
+##Project Results##
+*.csv
