@@ -1,5 +1,6 @@
 package distributedRedditAnalyser.bolt;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
@@ -16,16 +17,26 @@ import backtype.storm.tuple.Tuple;
  *
  */
 public class StatsWriterBolt extends BaseRichBolt {
-
 	private static final long serialVersionUID = -2245664448752984871L;
+	private String name = "";
+	private String folderName;
+	private FileWriter writer;
 	
-	FileWriter writer;
+	public StatsWriterBolt(String name, String folderName){
+		this.name = name;
+		this.folderName = folderName;
+	}
+	
+	public StatsWriterBolt(){}
 	
 	@Override
-	public void prepare(Map stormConf, TopologyContext context,
-			OutputCollector collector) {
+	public void prepare(Map stormConf, TopologyContext context,	OutputCollector collector) {
+		if(folderName != null){
+			File f = new File("results\\" + folderName);
+			f.mkdirs();
+		}
 		try {
-			writer = new FileWriter(String.format("results%s.csv", System.currentTimeMillis()));
+			writer = new FileWriter(folderName == null ? String.format("%s.csv", name) : String.format("results\\%s\\%s.csv", folderName, name));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

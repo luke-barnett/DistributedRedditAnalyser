@@ -13,16 +13,23 @@ import backtype.storm.tuple.Tuple;
  *
  */
 public class StatsPrinterBolt extends BaseBasicBolt {
-
 	private static final long serialVersionUID = -2245664448752984871L;
-	DecimalFormat df = new DecimalFormat("#.##");
+	
+	private DecimalFormat df = new DecimalFormat("#.##");
+	private String name = "";
+	
+	public StatsPrinterBolt(String name){
+		this.name = name;
+	}
+	
+	public StatsPrinterBolt(){}
 
 	@Override
     public void execute(Tuple tuple, BasicOutputCollector collector) {
 		Long n = tuple.getLong(0);
 		Double a = tuple.getDouble(1);
 		Double k = tuple.getDouble(2);
-        System.out.println("n:" + n + "\taccuracy:" + df.format(a) + "\tkappa:" + df.format(k) 
+        System.out.println("[" + name + "] n:" + n + "\taccuracy:" + df.format(a) + "\tkappa:" + df.format(k) 
         		+ "\t" + System.currentTimeMillis());
     }
 

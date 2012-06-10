@@ -83,31 +83,38 @@ public class Main {
 		//Create the topology builder
 		TopologyBuilder builder = new TopologyBuilder();
 		
+		BoltDeclarer instanceBolt = builder.setBolt("instancebolt", new InstanceBolt(instHeaders));
+		
 		//Add a spout for each sub-reddit
 		for(String subreddit : subreddits){
 			builder.setSpout("raw:" + subreddit, new RawRedditSpout(subreddit));
-		}
-		
-		BoltDeclarer instanceBolt = builder.setBolt("instancebolt", new InstanceBolt(instHeaders));
-		
-		for(String subreddit: subreddits){
 			instanceBolt.shuffleGrouping("raw:" + subreddit);
 		}
+		
 		builder.setBolt("stringToWordBolt", new StringToWordVectorBolt(FILTER_SET_SIZE, WORDS_TO_KEEP, instHeaders)).shuffleGrouping("instancebolt");
 		
+		String resultsFolder = ((Long)System.currentTimeMillis()).toString();
 		
 		//NaiveBayesMultinomial
 		builder.setBolt("ozaBoostBolt:naiveBayesMultinomial", new OzaBoostBolt("bayes.NaiveBayesMultinomial")).shuffleGrouping("stringToWordBolt");
-		builder.setBolt("naiveBayesMultinomialStatistics", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:naiveBayesMultinomial");
+		builder.setBolt("statistics:naiveBayesMultinomial", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:naiveBayesMultinomial");
+		
+		builder.setBolt("StatsPrinterBolt:naiveBayesMultinomial", new StatsPrinterBolt("naiveBayesMultinominal")).shuffleGrouping("statistics:naiveBayesMultinomial");
+		builder.setBolt("StatsWriterBolt:naiveBayesMultinomial", new StatsWriterBolt("naiveBayesMultinominal", resultsFolder)).shuffleGrouping("statistics:naiveBayesMultinomial");
 		
 		//NaiveBayes
-		//builder.setBolt("ozaBoostBolt:naiveBayes", new OzaBoostBolt("bayes.NaiveBayes")).shuffleGrouping("stringToWordBolt");
-		//builder.setBolt("naiveBayesStatistics", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:naiveBayes");
+		builder.setBolt("ozaBoostBolt:naiveBayes", new OzaBoostBolt("bayes.NaiveBayes")).shuffleGrouping("stringToWordBolt");
+		builder.setBolt("statistics:naiveBayes", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:naiveBayes");
 		
-		//builder.setBolt("printerBolt", new PrinterBolt()).shuffleGrouping("naiveBayesMultinomialStatistics").shuffleGrouping("naiveBayesStatistics");
+		builder.setBolt("StatsPrinterBolt:naiveBayes", new StatsPrinterBolt("naiveBayes")).shuffleGrouping("statistics:naiveBayes");
+		builder.setBolt("StatsWriterBolt:naiveBayes", new StatsWriterBolt("naiveBayes", resultsFolder)).shuffleGrouping("statistics:naiveBayes");
 		
-		builder.setBolt("StatsPrinterBolt", new StatsPrinterBolt()).shuffleGrouping("naiveBayesMultinomialStatistics");
-		builder.setBolt("StatsWriterBolt", new StatsWriterBolt()).shuffleGrouping("naiveBayesMultinomialStatistics");
+		//Perceptron
+		builder.setBolt("ozaBoostBolt:perceptron", new OzaBoostBolt("functions.Perceptron")).shuffleGrouping("stringToWordBolt");
+		builder.setBolt("statistics:perceptron", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:perceptron");
+		
+		builder.setBolt("StatsPrinterBolt:perceptron", new StatsPrinterBolt("perceptron")).shuffleGrouping("statistics:perceptron");
+		builder.setBolt("StatsWriterBolt:perceptron", new StatsWriterBolt("perceptron", resultsFolder)).shuffleGrouping("statistics:perceptron");
 		
 		//Create the configuration object
 		Config conf = new Config();
