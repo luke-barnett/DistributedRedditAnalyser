@@ -10,6 +10,11 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
+/**
+ * keeps track of statistics needed to compute frequency and kappa
+ * @author tony
+ *
+ */
 public class StatisticsBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1283116164348536110L;
@@ -56,11 +61,7 @@ public class StatisticsBolt extends BaseRichBolt {
 			totalPredictedCorrectly++;
 		}
 		stats[0][actual]++;
-		stats[1][pred]++;
-		
-		/*if(input.getBoolean(0)){
-			totalPredictedCorrectly++;
-		}*/
+		stats[1][pred]++;	
 		
 		totalCount++;
 		collector.ack(input);

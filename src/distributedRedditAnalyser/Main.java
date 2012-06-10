@@ -1,5 +1,6 @@
 package distributedRedditAnalyser;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,8 @@ import distributedRedditAnalyser.bolt.InstanceBolt;
 import distributedRedditAnalyser.bolt.OzaBoostBolt;
 import distributedRedditAnalyser.bolt.PrinterBolt;
 import distributedRedditAnalyser.bolt.StatisticsBolt;
+import distributedRedditAnalyser.bolt.StatsPrinterBolt;
+import distributedRedditAnalyser.bolt.StatsWriterBolt;
 import distributedRedditAnalyser.bolt.StringToWordVectorBolt;
 import distributedRedditAnalyser.spout.RawRedditSpout;
 import distributedRedditAnalyser.spout.SimRedditSpout;
@@ -41,6 +44,7 @@ public class Main {
 	 * @param args The sub-reddits (case sensitive) to use 
 	 */
 	public static void main(String[] args) {
+		
 		if(args.length == 0){
 			System.err.println("No sub-reddits given, unable to continue");
 			showUsage();
@@ -57,6 +61,12 @@ public class Main {
 		for(int i = 0; i < args.length; i++){
 			subreddits.add(args[i]);
 		}
+		
+		//TUNE PARAMETERS HERE
+		final int STAT_RES = 5;
+		final int FILTER_SET_SIZE = args.length * 100;//batch size is 100 posts per subreddit
+		final int WORDS_TO_KEEP = 200; //need larger word vectors for better results
+		final int RUNTIME = 180 * (60000);//change first term to number of minutes
 		
 		//Build the Instances Header
 		ArrayList<Attribute> att = new ArrayList<Attribute>();
@@ -76,7 +86,6 @@ public class Main {
 		//Add a spout for each sub-reddit
 		for(String subreddit : subreddits){
 			builder.setSpout("raw:" + subreddit, new RawRedditSpout(subreddit));
-			//builder.setBolt("instancebolt:" + subreddit , new InstanceBolt(instHeaders)).shuffleGrouping("raw:" + subreddit);
 		}
 		
 		BoltDeclarer instanceBolt = builder.setBolt("instancebolt", new InstanceBolt(instHeaders));
@@ -84,16 +93,9 @@ public class Main {
 		for(String subreddit: subreddits){
 			instanceBolt.shuffleGrouping("raw:" + subreddit);
 		}
-		builder.setBolt("stringToWordBolt", new StringToWordVectorBolt(200, 80, instHeaders)).shuffleGrouping("instancebolt");
+		builder.setBolt("stringToWordBolt", new StringToWordVectorBolt(FILTER_SET_SIZE, WORDS_TO_KEEP, instHeaders)).shuffleGrouping("instancebolt");
 		
-		/*BoltDeclarer stringToWordVectorBolt = builder.setBolt("stringToWordBolt", new StringToWordVectorBolt(200, 80, instHeaders));
 		
-		for(String subreddit: subreddits){
-			stringToWordVectorBolt.shuffleGrouping("instancebolt:" + subreddit);
-		}*/
-		
-		//change how often to display stats here
-		final int STAT_RES = 5;
 		//NaiveBayesMultinomial
 		builder.setBolt("ozaBoostBolt:naiveBayesMultinomial", new OzaBoostBolt("bayes.NaiveBayesMultinomial")).shuffleGrouping("stringToWordBolt");
 		builder.setBolt("naiveBayesMultinomialStatistics", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:naiveBayesMultinomial");
@@ -102,7 +104,10 @@ public class Main {
 		//builder.setBolt("ozaBoostBolt:naiveBayes", new OzaBoostBolt("bayes.NaiveBayes")).shuffleGrouping("stringToWordBolt");
 		//builder.setBolt("naiveBayesStatistics", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:naiveBayes");
 		
-		builder.setBolt("printerBolt", new PrinterBolt()).shuffleGrouping("naiveBayesMultinomialStatistics").shuffleGrouping("naiveBayesStatistics");
+		//builder.setBolt("printerBolt", new PrinterBolt()).shuffleGrouping("naiveBayesMultinomialStatistics").shuffleGrouping("naiveBayesStatistics");
+		
+		builder.setBolt("StatsPrinterBolt", new StatsPrinterBolt()).shuffleGrouping("naiveBayesMultinomialStatistics");
+		builder.setBolt("StatsWriterBolt", new StatsWriterBolt()).shuffleGrouping("naiveBayesMultinomialStatistics");
 		
 		//Create the configuration object
 		Config conf = new Config();
@@ -114,7 +119,7 @@ public class Main {
 		cluster.submitTopology("redditAnalyser", conf, builder.createTopology());
 		
 		//Give a timeout period
-		Utils.sleep(600000);
+		Utils.sleep(RUNTIME);
 		
 		//Kill the topology first
 		cluster.killTopology("redditAnalyser");

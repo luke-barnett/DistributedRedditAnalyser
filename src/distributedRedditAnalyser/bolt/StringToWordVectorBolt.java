@@ -24,6 +24,7 @@ import backtype.storm.tuple.Values;
 /**
  * Takes string instances and turns them into word vectors
  * @author Luke Barnett 1109967
+ * @author tony
  *
  */
 public class StringToWordVectorBolt extends BaseRichBolt{
@@ -35,7 +36,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 	private final ArrayBlockingQueue<Instance> BATCH_QUEUE;
 	private OutputCollector collector;
 	private Semaphore semaphore;
-	private Filter filter;
+	private StringToWordVector filter;
 	private Boolean training = true;
 	public StringToWordVectorBolt(int batchSize, int maxNumberOfWordsToKeep, Instances instHeaders){
 		if(batchSize < 1){
@@ -51,6 +52,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 		INST_HEADERS = instHeaders;
 		semaphore = new Semaphore(1);
 		filter = new StringToWordVector(MAX_NUMBER_OF_WORDS_TO_KEEP);
+		filter.setOutputWordCounts(true);
 	}
 
 	@Override
@@ -74,7 +76,6 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 		try {
 			semaphore.acquire();
 		} catch (InterruptedException e2) {
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
 		
@@ -103,7 +104,6 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 					//Empty the queue for memories
 					BATCH_QUEUE.clear();
 				} catch (Exception e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 				

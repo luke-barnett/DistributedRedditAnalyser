@@ -1,0 +1,33 @@
+package distributedRedditAnalyser.bolt;
+
+import java.text.DecimalFormat;
+
+import backtype.storm.topology.BasicOutputCollector;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseBasicBolt;
+import backtype.storm.tuple.Tuple;
+
+/**
+ * bolt to print statistics in a nice formatted way to standard output
+ * @author tony
+ *
+ */
+public class StatsPrinterBolt extends BaseBasicBolt {
+
+	private static final long serialVersionUID = -2245664448752984871L;
+	DecimalFormat df = new DecimalFormat("#.##");
+
+	@Override
+    public void execute(Tuple tuple, BasicOutputCollector collector) {
+		Long n = tuple.getLong(0);
+		Double a = tuple.getDouble(1);
+		Double k = tuple.getDouble(2);
+        System.out.println("n:" + n + "\taccuracy:" + df.format(a) + "\tkappa:" + df.format(k) 
+        		+ "\t" + System.currentTimeMillis());
+    }
+
+    @Override
+    public void declareOutputFields(OutputFieldsDeclarer ofd) {
+    }
+
+}
