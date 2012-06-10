@@ -66,7 +66,7 @@ public class Main {
 		final int STAT_RES = 5;
 		final int FILTER_SET_SIZE = args.length * 100;//batch size is 100 posts per subreddit
 		final int WORDS_TO_KEEP = 200; //need larger word vectors for better results
-		final int RUNTIME = 180 * (60000);//change first term to number of minutes
+		final int RUNTIME = 600 * (60000);//change first term to number of minutes
 		
 		//Build the Instances Header
 		ArrayList<Attribute> att = new ArrayList<Attribute>();
@@ -85,15 +85,16 @@ public class Main {
 		
 		BoltDeclarer instanceBolt = builder.setBolt("instancebolt", new InstanceBolt(instHeaders));
 		
+		String resultsFolder = ((Long)System.currentTimeMillis()).toString();
+		
 		//Add a spout for each sub-reddit
 		for(String subreddit : subreddits){
+			resultsFolder = String.format("[%s]", subreddit) + resultsFolder;
 			builder.setSpout("raw:" + subreddit, new RawRedditSpout(subreddit));
 			instanceBolt.shuffleGrouping("raw:" + subreddit);
 		}
 		
 		builder.setBolt("stringToWordBolt", new StringToWordVectorBolt(FILTER_SET_SIZE, WORDS_TO_KEEP, instHeaders)).shuffleGrouping("instancebolt");
-		
-		String resultsFolder = ((Long)System.currentTimeMillis()).toString();
 		
 		//NaiveBayesMultinomial
 		builder.setBolt("ozaBoostBolt:naiveBayesMultinomial", new OzaBoostBolt("bayes.NaiveBayesMultinomial")).shuffleGrouping("stringToWordBolt");
