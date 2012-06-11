@@ -74,7 +74,7 @@ public class StatisticsBolt extends BaseRichBolt {
 				randomGuessAccuracy += (stats[0][i]/totalCount)*(stats[1][i]/totalCount);
 			}
 			double kappa = (accuracy - randomGuessAccuracy) / (1 - randomGuessAccuracy);
-			collector.emit(new Values(totalCount,accuracy, kappa));
+			collector.emit(new Values(totalCount,accuracy, Double.isNaN(kappa) ? 0 : kappa));
 		}
 	}
 
