@@ -67,7 +67,7 @@ public class Main {
 		final int STAT_RES = 5;
 		final int FILTER_SET_SIZE = args.length * 100;//batch size is 100 posts per subreddit
 		final int WORDS_TO_KEEP = 200; //need larger word vectors for better results
-		final int RUNTIME = 600 * (60000);//change first term to number of minutes
+		final int RUNTIME = 300 * (60000);//change first term to number of minutes
 		
 		//Build the Instances Header
 		ArrayList<Attribute> att = new ArrayList<Attribute>();
