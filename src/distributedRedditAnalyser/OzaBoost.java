@@ -21,6 +21,7 @@ package distributedRedditAnalyser;
 
 import java.util.ArrayDeque;
 import java.util.Random;
+import java.util.concurrent.Semaphore;
 
 import weka.core.Instance;
 import moa.classifiers.AbstractClassifier;
@@ -46,6 +47,8 @@ import moa.options.IntOption;
 public class OzaBoost extends AbstractClassifier {
 	private static final long serialVersionUID = -4456874021287021340L;
 	
+	private Semaphore lock = new Semaphore(1);
+	
 	@Override
     public String getPurposeString() {
         return "Incremental on-line boosting of Oza and Russell.";
@@ -64,37 +67,51 @@ public class OzaBoost extends AbstractClassifier {
 
     @Override
     public void resetLearningImpl() {
-        this.ensemble = new ArrayDeque<ClassifierInstance>(ensembleSizeOption.getValue());
-        Classifier baseLearner = (Classifier) getPreparedClassOption(this.baseLearnerOption);
-        baseLearner.resetLearning();
+    	try {
+			lock.acquire();		
+	        this.ensemble = new ArrayDeque<ClassifierInstance>(ensembleSizeOption.getValue());
+	        Classifier baseLearner = (Classifier) getPreparedClassOption(this.baseLearnerOption);
+	        baseLearner.resetLearning();
+    	} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			lock.release();
+		}
     }
 
     @Override
     public void trainOnInstanceImpl(Instance inst) {
-    	//Get a new classifier
-    	Classifier newClassifier = ((Classifier) getPreparedClassOption(this.baseLearnerOption)).copy();
-    	ensemble.add(new ClassifierInstance(newClassifier));
-    	
-    	//If we have too many classifiers
-    	while(ensemble.size() > ensembleSizeOption.getValue())
-    		ensemble.pollFirst();
-    	
-        double lambda_d = 1.0;
-        for(ClassifierInstance c : ensemble){
-        	double k = this.pureBoostOption.isSet() ? lambda_d : MiscUtils.poisson(lambda_d, this.classifierRandom);
-        	if (k > 0.0) {
-                Instance weightedInst = (Instance) inst.copy();
-                weightedInst.setWeight(inst.weight() * k);
-                c.getClassifier().trainOnInstance(weightedInst);
-            }
-            if (c.getClassifier().correctlyClassifies(inst)) {
-                c.setScms(c.getScms() + lambda_d);
-                lambda_d *= this.trainingWeightSeenByModel / (2 * c.getScms());
-            } else {
-            	c.setSwms(c.getSwms() + lambda_d);
-                lambda_d *= this.trainingWeightSeenByModel / (2 * c.getSwms());
-            }
-        }
+    	try {
+			lock.acquire();
+			//Get a new classifier
+	    	Classifier newClassifier = ((Classifier) getPreparedClassOption(this.baseLearnerOption)).copy();
+	    	ensemble.add(new ClassifierInstance(newClassifier));
+	    	
+	    	//If we have too many classifiers
+	    	while(ensemble.size() > ensembleSizeOption.getValue())
+	    		ensemble.pollFirst();
+	    	
+	        double lambda_d = 1.0;
+	        for(ClassifierInstance c : ensemble){
+	        	double k = this.pureBoostOption.isSet() ? lambda_d : MiscUtils.poisson(lambda_d, this.classifierRandom);
+	        	if (k > 0.0) {
+	                Instance weightedInst = (Instance) inst.copy();
+	                weightedInst.setWeight(inst.weight() * k);
+	                c.getClassifier().trainOnInstance(weightedInst);
+	            }
+	            if (c.getClassifier().correctlyClassifies(inst)) {
+	                c.setScms(c.getScms() + lambda_d);
+	                lambda_d *= this.trainingWeightSeenByModel / (2 * c.getScms());
+	            } else {
+	            	c.setSwms(c.getSwms() + lambda_d);
+	                lambda_d *= this.trainingWeightSeenByModel / (2 * c.getSwms());
+	            }
+	        }
+    	} catch (InterruptedException e) {
+			e.printStackTrace();
+		}finally{
+			lock.release();
+		}
     }
 
     protected double getEnsembleMemberWeight(ClassifierInstance i) {
@@ -107,20 +124,27 @@ public class OzaBoost extends AbstractClassifier {
     }
 
     public double[] getVotesForInstance(Instance inst) {
-        DoubleVector combinedVote = new DoubleVector();
-        for(ClassifierInstance c : ensemble){
-        	double memberWeight = getEnsembleMemberWeight(c);
-        	if (memberWeight > 0.0) {
-                DoubleVector vote = new DoubleVector(c.getClassifier().getVotesForInstance(inst));
-                if (vote.sumOfValues() > 0.0) {
-                    vote.normalize();
-                    vote.scaleValues(memberWeight);
-                    combinedVote.addValues(vote);
-                }
-            } else {
-                break;
-            }
-        }
+    	DoubleVector combinedVote = new DoubleVector();
+    	try {
+			lock.acquire();
+	        for(ClassifierInstance c : ensemble){
+	        	double memberWeight = getEnsembleMemberWeight(c);
+	        	if (memberWeight > 0.0) {
+	                DoubleVector vote = new DoubleVector(c.getClassifier().getVotesForInstance(inst));
+	                if (vote.sumOfValues() > 0.0) {
+	                    vote.normalize();
+	                    vote.scaleValues(memberWeight);
+	                    combinedVote.addValues(vote);
+	                }
+	            } else {
+	                break;
+	            }
+	        }
+    	} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			lock.release();
+		}
         return combinedVote.getArrayRef();
     }
 
@@ -140,17 +164,22 @@ public class OzaBoost extends AbstractClassifier {
     @Override
     public Classifier[] getSubClassifiers() {
     	Classifier[] classifiers = new Classifier[ensemble.size()];
-    	
-    	int i = 0;
-    	for(ClassifierInstance c : ensemble){
-    		if(i < classifiers.length){
-    			classifiers[i] = c.getClassifier().copy();
-    		}else{
-    			break;
-    		}
-    		i++;
-    	}
-    	
+    	try {
+			lock.acquire();
+	    	int i = 0;
+	    	for(ClassifierInstance c : ensemble){
+	    		if(i < classifiers.length){
+	    			classifiers[i] = c.getClassifier().copy();
+	    		}else{
+	    			break;
+	    		}
+	    		i++;
+	    	}
+    	} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			lock.release();
+		}
         return classifiers;
     }
     
@@ -159,10 +188,18 @@ public class OzaBoost extends AbstractClassifier {
     }
 
     public void addClassifier(ClassifierInstance c){
-    	ensemble.add(c.clone());
+    	try {
+			lock.acquire();
+	    	ensemble.add(c.clone());
+	    	
+	    	//If we have too many classifiers
+	    	while(ensemble.size() > ensembleSizeOption.getValue())
+	    		ensemble.pollFirst();
     	
-    	//If we have too many classifiers
-    	while(ensemble.size() > ensembleSizeOption.getValue())
-    		ensemble.pollFirst();
+    	} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			lock.release();
+		}
     }
 }
