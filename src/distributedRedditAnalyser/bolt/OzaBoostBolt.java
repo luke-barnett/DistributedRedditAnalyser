@@ -18,6 +18,14 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
+/**
+ * 
+ * OzaBoostBolt that runs instances through a OzaBoost instances for moa
+ * 
+ * @author Luke Barnett 1109967
+ * @author Tony Chen 1111377
+ *
+ */
 public class OzaBoostBolt extends BaseRichBolt {
 	
 	private final OzaBoost classifier;
@@ -28,7 +36,6 @@ public class OzaBoostBolt extends BaseRichBolt {
 	
 	public OzaBoostBolt(String classifierName){
 		classifier = new OzaBoost();
-		//TODO Set the base learner + other settings
 		classifier.baseLearnerOption = new ClassOption("baseLearner", 'l',"Classifier to train.",Classifier.class, classifierName);
 		classifier.prepareForUse();
 	}
@@ -43,6 +50,7 @@ public class OzaBoostBolt extends BaseRichBolt {
 		
 		Object obj = input.getValue(0);
 		
+		//If we get the headers set them and reset
 		if(obj.getClass() == Instances.class){
 			INST_HEADERS = new InstancesHeader((Instances) obj);
 			classifier.setModelContext(INST_HEADERS);
@@ -54,6 +62,7 @@ public class OzaBoostBolt extends BaseRichBolt {
 			//Train on instance
 			classifier.trainOnInstanceImpl(inst);
 		}
+		
 		collector.ack(input);
 	}
 

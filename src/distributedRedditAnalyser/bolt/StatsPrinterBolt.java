@@ -8,8 +8,9 @@ import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
 
 /**
- * bolt to print statistics in a nice formatted way to standard output
- * @author tony
+ * Bolt to print statistics in a nice formatted way to standard output
+ * @author Luke Barnett 1109967
+ * @author Tony Chen 1111377
  *
  */
 public class StatsPrinterBolt extends BaseBasicBolt {
@@ -29,8 +30,9 @@ public class StatsPrinterBolt extends BaseBasicBolt {
 		Long n = tuple.getLong(0);
 		Double a = tuple.getDouble(1);
 		Double k = tuple.getDouble(2);
-        System.out.println("[" + name + "] n:" + n + "\taccuracy:" + df.format(a) + "\tkappa:" + df.format(k) 
-        		+ "\t" + System.currentTimeMillis());
+		//Print to standard output
+        System.out.println("[" + name + "] n:" + n + "\taccuracy:" + df.format(a) + "\tkappa:" + df.format(k) + "\t" + System.currentTimeMillis());
+        //tuples are ack in the super class so we don't need to worry about it
     }
 
     @Override

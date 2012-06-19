@@ -71,8 +71,11 @@ public class RawRedditSpout extends BaseRichSpout {
 
 	@Override
 	public void nextTuple() {
+		//Sleep to reduce congestion
 		Utils.sleep(50);
+		//Try and get the next post
 		Post nextPost = getNextPost();
+		//If we have gotten a post emit it
 		if(nextPost != null)
 			collector.emit(new Values(nextPost));
 	}
@@ -83,7 +86,11 @@ public class RawRedditSpout extends BaseRichSpout {
 	}
 	
 	private Post getNextPost(){
+		/*
+		 * If the queue is empty then we need to try fill it up
+		 */
 		if(QUEUE.size() < 1){
+			//Set up the HTTP client
 			HttpParams parameters = new BasicHttpParams();
 			
 			parameters.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
@@ -95,15 +102,19 @@ public class RawRedditSpout extends BaseRichSpout {
 			DefaultHttpClient httpClient = new DefaultHttpClient(parameters);
 	
 			try {
-				
+				//If this is our first scrape of the api, then we will perform a backlog
 				if(initialPull){
+					
+					//For every page of the subreddit we are to scrape from
 					String lastItemId = "";
 					for(int i = 0; i < INITIAL_PAGE_COUNT; i++){
+						//Retrieve the page
 						HttpGet getRequest = new HttpGet(URL +"&count=" + count + "&after=" + lastItemId);
 						ResponseHandler<String> responseHandler = new BasicResponseHandler();
 						
 						String responseBody = httpClient.execute(getRequest, responseHandler);
 						
+						//Parse it as JSON
 						JSONParser parser= new JSONParser();
 						
 						JSONObject wrappingObject = (JSONObject) parser.parse(responseBody);
@@ -111,9 +122,6 @@ public class RawRedditSpout extends BaseRichSpout {
 						JSONObject wrappingObjectData = (JSONObject) wrappingObject.get("data");
 						
 						JSONArray children = (JSONArray) wrappingObjectData.get("children");
-						
-						//Debugging line for testing limits
-						//System.out.printf("There are %d children in %s\r\n", children.size(), getRequest.getURI().toString());
 						
 						if(children.size() == 0)
 							break;
@@ -126,6 +134,7 @@ public class RawRedditSpout extends BaseRichSpout {
 						
 						lastItemId = (String) wrappingObjectData.get("after");
 						
+						//If this is the first page, then it's the point we want to store to ensure that we don't get repeated posts
 						if(i == 0){
 							latestTimestamp = ((Double) ((JSONObject)((JSONObject) children.get(0)).get("data")).get("created")).longValue();
 						}
@@ -139,11 +148,13 @@ public class RawRedditSpout extends BaseRichSpout {
 				}else{
 					//Rate limit for the API (pages are cached for 30 seconds)
 					Utils.sleep(10000);
+					//Get the page
 					HttpGet getRequest = new HttpGet(URL);
 					ResponseHandler<String> responseHandler = new BasicResponseHandler();
 		            
 					String responseBody = httpClient.execute(getRequest, responseHandler);
 					
+					//Parse it
 					JSONParser parser= new JSONParser();
 					
 					JSONObject wrappingObject = (JSONObject) parser.parse(responseBody);

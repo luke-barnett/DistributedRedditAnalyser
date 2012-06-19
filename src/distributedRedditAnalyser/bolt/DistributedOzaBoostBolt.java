@@ -20,6 +20,13 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
+/**
+ * DistributedOzaBoost runs instances through a custom OzaBoost object that has been designed to run over multiple bolts working in parallel
+ * 
+ * @author Luke Barnett 1109967
+ * @author Tony Chen 1111377
+ *
+ */
 public class DistributedOzaBoostBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 8636714472891286811L;
@@ -31,7 +38,6 @@ public class DistributedOzaBoostBolt extends BaseRichBolt {
 	public DistributedOzaBoostBolt(String classifierName, int id){
 		this.id = id;
 		classifier = new OzaBoost();
-		//TODO Set the base learner + other settings
 		classifier.baseLearnerOption = new ClassOption("baseLearner", 'l',"Classifier to train.",Classifier.class, classifierName);
 		classifier.ensembleSizeOption.setValue(50);
 		classifier.prepareForUse();
@@ -46,11 +52,13 @@ public class DistributedOzaBoostBolt extends BaseRichBolt {
 	public void execute(Tuple input) {
 		
 		Object obj = input.getValue(0);
+		//If we get the instance headers set them and reset
 		if(obj.getClass() == Instances.class){
 			INST_HEADERS = new InstancesHeader((Instances) obj);
 			classifier.setModelContext(INST_HEADERS);
 			classifier.resetLearningImpl();
 		}else if(obj.getClass() == SparseInstance.class){
+			//If it's an instance
 			SparseInstance inst = (SparseInstance) obj;
 			//Emit the entire prediction array and the correct value
 			collector.emit(new Values(classifier.getVotesForInstance(inst), inst.classValue()));
@@ -61,6 +69,7 @@ public class DistributedOzaBoostBolt extends BaseRichBolt {
 			if(latestClassifier != null)
 				collector.emit(new Values(latestClassifier, (Integer)id));
 		}else if(obj.getClass() == ClassifierInstance.class){
+			//If it's a classifier try to add it to the ensemble
 			//Make sure we aren't just adding our own classifier
 			if(((Integer)input.getValue(1)).intValue() != id){
 				classifier.addClassifier((ClassifierInstance)obj);

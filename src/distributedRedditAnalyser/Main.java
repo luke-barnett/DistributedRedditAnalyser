@@ -16,7 +16,6 @@ import distributedRedditAnalyser.bolt.StatsPrinterBolt;
 import distributedRedditAnalyser.bolt.StatsWriterBolt;
 import distributedRedditAnalyser.bolt.StringToWordVectorBolt;
 import distributedRedditAnalyser.spout.RawRedditSpout;
-import distributedRedditAnalyser.spout.SimRedditSpout;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
@@ -96,6 +95,8 @@ public class Main {
 		}
 		
 		builder.setBolt("stringToWordBolt", new StringToWordVectorBolt(FILTER_SET_SIZE, WORDS_TO_KEEP, instHeaders)).shuffleGrouping("instancebolt");
+		
+		//Normal OzaBoost
 		
 		//NaiveBayesMultinomial
 		/*builder.setBolt("ozaBoostBolt:naiveBayesMultinomial", new OzaBoostBolt("bayes.NaiveBayesMultinomial")).shuffleGrouping("stringToWordBolt");

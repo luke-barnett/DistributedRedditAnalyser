@@ -13,7 +13,8 @@ import backtype.storm.tuple.Tuple;
 
 /**
  * bolt that writes statistic to a csv file so they can be graphed, analyzed etc.
- * @author tony
+ * @author Luke Barnett 1109967
+ * @author Tony Chen 1111377
  *
  */
 public class StatsWriterBolt extends BaseRichBolt {
@@ -21,6 +22,7 @@ public class StatsWriterBolt extends BaseRichBolt {
 	private String name = "";
 	private String folderName;
 	private FileWriter writer;
+	private OutputCollector collector;
 	
 	public StatsWriterBolt(String name, String folderName){
 		this.name = name;
@@ -31,6 +33,8 @@ public class StatsWriterBolt extends BaseRichBolt {
 	
 	@Override
 	public void prepare(Map stormConf, TopologyContext context,	OutputCollector collector) {
+		this.collector = collector;
+		//Set up the file and create any folders that are needed.
 		if(folderName != null){
 			File f = new File("results\\" + folderName);
 			f.mkdirs();
@@ -51,13 +55,16 @@ public class StatsWriterBolt extends BaseRichBolt {
 		Long n = input.getLong(0);
 		Double a = input.getDouble(1);
 		Double k = input.getDouble(2);
+		
+		//Write to file
 		try {
 			writer.write(n + "," + a + "," + k + "\n");
 			writer.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+		//Always ack the input
+		collector.ack(input);
 	}
 
 }

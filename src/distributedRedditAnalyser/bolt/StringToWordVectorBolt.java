@@ -23,8 +23,9 @@ import backtype.storm.tuple.Values;
 
 /**
  * Takes string instances and turns them into word vectors
+ * 
  * @author Luke Barnett 1109967
- * @author tony
+ * @author Tony Chen 1111377
  *
  */
 public class StringToWordVectorBolt extends BaseRichBolt{
@@ -38,7 +39,9 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 	private Semaphore semaphore;
 	private StringToWordVector filter;
 	private Boolean training = true;
+	
 	public StringToWordVectorBolt(int batchSize, int maxNumberOfWordsToKeep, Instances instHeaders){
+		//We need to have a batch size that is at least 1
 		if(batchSize < 1){
 			throw new IllegalArgumentException("Batch Size is less than 1");
 		}
@@ -46,6 +49,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 			throw new IllegalArgumentException("Max number of words to keep is less than 1");
 		}
 		
+		//Store all the variables we need and set things up
 		MAX_NUMBER_OF_WORDS_TO_KEEP = maxNumberOfWordsToKeep;
 		BATCH_SIZE = batchSize;
 		BATCH_QUEUE = new ArrayBlockingQueue<Instance>(BATCH_SIZE);
@@ -62,23 +66,28 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 	}
 
 	@Override
-	public void prepare(Map stormConf, TopologyContext context,
-			OutputCollector collector) {
+	public void prepare(Map stormConf, TopologyContext context,	OutputCollector collector) {
 		this.collector = collector;
 		
 	}
 
 	@Override
 	public void execute(Tuple input) {
+		//Get the instance
 		DenseInstance inst = (DenseInstance) input.getValue(0);
 		INST_HEADERS = inst.dataset();
 		
+		//Retrieve the semaphore
 		try {
 			semaphore.acquire();
 		} catch (InterruptedException e2) {
 			e2.printStackTrace();
 		}
 		
+		/*
+		 * If we are training then we add it to the batch until it's full
+		 * At which point the model is created and we just stream instances through the model
+		 */
 		if(training){
 			try{
 				BATCH_QUEUE.add(inst);
@@ -86,16 +95,20 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 				//Queue is full so we should train the filter
 				try {
 					
+					//Add all the instances to the batch
 					Instances data = new Instances(INST_HEADERS);
 					
 					for(Instance i : BATCH_QUEUE){
 						data.add(i);
 					}
 					
+					//Set up the filter
 					filter.setInputFormat(data);
 					
-					//emit the instances used to train the filter
+					//Run the model creation
 					Instances filter_training_set = Filter.useFilter(data, filter);
+					
+					//emit the instances used to train the filter
 					for(int i=0; i<filter_training_set.numInstances(); i++){
 						collector.emit(new Values(filter_training_set.get(i)));
 					}
@@ -109,6 +122,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 				
 			}
 		}else{
+			//Filter through the model and emit
 			try {
 				filter.input(inst);
 			} catch (Exception e) {
@@ -121,6 +135,7 @@ public class StringToWordVectorBolt extends BaseRichBolt{
 			}
 		}
 		
+		//Always acknowledge the tuple we have processed so it isn't sent somewhere else
 		collector.ack(input);
 		semaphore.release();
 	}

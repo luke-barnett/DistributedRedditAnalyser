@@ -12,7 +12,8 @@ import backtype.storm.tuple.Values;
 
 /**
  * keeps track of statistics needed to compute frequency and kappa
- * @author tony
+ * @author Luke Barnett 1109967
+ * @author Tony Chen 1111377
  *
  */
 public class StatisticsBolt extends BaseRichBolt {

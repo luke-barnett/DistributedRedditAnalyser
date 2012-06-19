@@ -42,6 +42,7 @@ import moa.options.IntOption;
  * http://code.google.com/p/moa/source/browse/moa/src/main/java/moa/classifiers/meta/OzaBoost.java
  * 
  * @author Luke Barnett 1109967
+ * @author Tony Chen 1111377
  *
  */
 public class OzaBoost extends AbstractClassifier {
