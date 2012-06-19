@@ -17,7 +17,7 @@ import backtype.storm.tuple.Values;
  */
 public class StatisticsBolt extends BaseRichBolt {
 
-	private static final long serialVersionUID = 1283116164348536110L;
+	private static final long serialVersionUID = -3382457336041546604L;
 	private OutputCollector collector;
 	private final int REPORTING_FREQUENCY;
 	private final int NUMBER_OF_CLASSES;
@@ -43,38 +43,40 @@ public class StatisticsBolt extends BaseRichBolt {
 	@Override
 	public void execute(Tuple input) {
 		
-		double[] dist = (double[]) input.getValue(0);
-		//wont cast Double objects to int, doing it the long way
-		Double d_actual =(Double)input.getValue(1);
-		int actual = d_actual.intValue();
-		int pred = 0;
-		double max = -1;
-		for(int i=0;i<dist.length;i++){
-			if(dist[i]>max){
-				pred = i;
-				max = dist[i];
+		if(input.getValue(0).getClass() == double[].class){
+			double[] dist = (double[]) input.getValue(0);
+			//wont cast Double objects to int, doing it the long way
+			Double d_actual =(Double)input.getValue(1);
+			int actual = d_actual.intValue();
+			int pred = 0;
+			double max = -1;
+			for(int i=0;i<dist.length;i++){
+				if(dist[i]>max){
+					pred = i;
+					max = dist[i];
+				}
 			}
-		}
-		
-		//update counted statistics
-		if(pred == actual){
-			totalPredictedCorrectly++;
-		}
-		stats[0][actual]++;
-		stats[1][pred]++;	
-		
-		totalCount++;
-		collector.ack(input);
-		
-		if(totalCount % REPORTING_FREQUENCY == 0){
-			double accuracy = (double)totalPredictedCorrectly / (double)totalCount;
-			//calculate probably of getting correct prediction by chance
-			double randomGuessAccuracy = 0;
-			for(int i=0;i<stats[0].length;i++){
-				randomGuessAccuracy += (stats[0][i]/totalCount)*(stats[1][i]/totalCount);
+			
+			//update counted statistics
+			if(pred == actual){
+				totalPredictedCorrectly++;
 			}
-			double kappa = (accuracy - randomGuessAccuracy) / (1 - randomGuessAccuracy);
-			collector.emit(new Values(totalCount,accuracy, Double.isNaN(kappa) ? 0 : kappa));
+			stats[0][actual]++;
+			stats[1][pred]++;	
+			
+			totalCount++;
+			collector.ack(input);
+			
+			if(totalCount % REPORTING_FREQUENCY == 0){
+				double accuracy = (double)totalPredictedCorrectly / (double)totalCount;
+				//calculate probably of getting correct prediction by chance
+				double randomGuessAccuracy = 0;
+				for(int i=0;i<stats[0].length;i++){
+					randomGuessAccuracy += (stats[0][i]/totalCount)*(stats[1][i]/totalCount);
+				}
+				double kappa = (accuracy - randomGuessAccuracy) / (1 - randomGuessAccuracy);
+				collector.emit(new Values(totalCount,accuracy, Double.isNaN(kappa) ? 0 : kappa));
+			}
 		}
 	}
 
