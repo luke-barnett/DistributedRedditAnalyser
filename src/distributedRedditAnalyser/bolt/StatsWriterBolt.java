@@ -36,11 +36,11 @@ public class StatsWriterBolt extends BaseRichBolt {
 		this.collector = collector;
 		//Set up the file and create any folders that are needed.
 		if(folderName != null){
-			File f = new File("results\\" + folderName);
+			File f = new File("results/" + folderName);
 			f.mkdirs();
 		}
 		try {
-			writer = new FileWriter(folderName == null ? String.format("%s.csv", name) : String.format("results\\%s\\%s.csv", folderName, name));
+			writer = new FileWriter(folderName == null ? String.format("%s.csv", name) : String.format("results/%s/%s.csv", folderName, name));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
