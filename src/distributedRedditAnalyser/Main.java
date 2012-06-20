@@ -99,7 +99,7 @@ public class Main {
 		//Normal OzaBoost
 		
 		//NaiveBayesMultinomial
-		/*builder.setBolt("ozaBoostBolt:naiveBayesMultinomial", new OzaBoostBolt("bayes.NaiveBayesMultinomial")).shuffleGrouping("stringToWordBolt");
+		builder.setBolt("ozaBoostBolt:naiveBayesMultinomial", new OzaBoostBolt("bayes.NaiveBayesMultinomial")).shuffleGrouping("stringToWordBolt");
 		builder.setBolt("statistics:naiveBayesMultinomial", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:naiveBayesMultinomial");
 		
 		builder.setBolt("StatsPrinterBolt:naiveBayesMultinomial", new StatsPrinterBolt("naiveBayesMultinominal")).shuffleGrouping("statistics:naiveBayesMultinomial");
@@ -117,12 +117,12 @@ public class Main {
 		builder.setBolt("statistics:perceptron", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:perceptron");
 		
 		builder.setBolt("StatsPrinterBolt:perceptron", new StatsPrinterBolt("perceptron")).shuffleGrouping("statistics:perceptron");
-		builder.setBolt("StatsWriterBolt:perceptron", new StatsWriterBolt("perceptron", resultsFolder)).shuffleGrouping("statistics:perceptron");*/
+		builder.setBolt("StatsWriterBolt:perceptron", new StatsWriterBolt("perceptron", resultsFolder)).shuffleGrouping("statistics:perceptron");
 		
 		//Distributed OzaBoost
 		//NaiveBayesMultinomial
 		//Create the bolts
-		BoltDeclarer naiveBayesMultinomial1 = builder.setBolt("ozaBoostBolt:naiveBayesMultinomial1", new DistributedOzaBoostBolt("bayes.NaiveBayesMultinomial", 1)).shuffleGrouping("stringToWordBolt");
+		/*BoltDeclarer naiveBayesMultinomial1 = builder.setBolt("ozaBoostBolt:naiveBayesMultinomial1", new DistributedOzaBoostBolt("bayes.NaiveBayesMultinomial", 1)).shuffleGrouping("stringToWordBolt");
 		BoltDeclarer naiveBayesMultinomial2 = builder.setBolt("ozaBoostBolt:naiveBayesMultinomial2", new DistributedOzaBoostBolt("bayes.NaiveBayesMultinomial", 2)).shuffleGrouping("stringToWordBolt");
 		BoltDeclarer naiveBayesMultinomial3 = builder.setBolt("ozaBoostBolt:naiveBayesMultinomial3", new DistributedOzaBoostBolt("bayes.NaiveBayesMultinomial", 3)).shuffleGrouping("stringToWordBolt");
 		
@@ -184,7 +184,7 @@ public class Main {
 		builder.setBolt("statistics:perceptron", new StatisticsBolt(subreddits.size(),STAT_RES)).shuffleGrouping("ozaBoostBolt:perceptron1");
 		
 		builder.setBolt("statsPrinterBolt:perceptron", new StatsPrinterBolt("perceptron")).shuffleGrouping("statistics:perceptron");
-		builder.setBolt("statsWriterBolt:perceptron", new StatsWriterBolt("perceptron", resultsFolder)).shuffleGrouping("statistics:perceptron");
+		builder.setBolt("statsWriterBolt:perceptron", new StatsWriterBolt("perceptron", resultsFolder)).shuffleGrouping("statistics:perceptron");*/
 		
 		
 		//Create the configuration object
