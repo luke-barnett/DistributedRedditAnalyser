@@ -1,11 +1,28 @@
-if [ -d "RELEASE" ]; then
-    mv "RELEASE" "RELEASE("$(date +%F-%T)")"
+if [ ! -d "storm-0.8.1" ]; then
+    echo "Downloading storm"
+    curl https://dl.dropbox.com/u/133901206/storm-0.8.1.zip > /tmp/storm.zip
+    echo "Download done"
+    if zipinfo /tmp/storm.zip > /dev/null; then
+        echo "Unziping storm"
+        unzip /tmp/storm.zip > /dev/null
+        echo "Unzip done"
+        rm /tmp/storm.zip
+    else
+        rm /tmp/storm.zip
+        exit
+    fi
 fi
-mkdir RELEASE
+
+if [ -d "results" ]; then
+    mv "results" "results("$(date +%F-%T)")"
+fi
+mkdir results
 
 rm -rf target
-nohup mvn package > RELEASE/maven.log 2>&1
-cp target/*-jar-with-dependencies.jar RELEASE/uberjar.jar
+echo "Compiling"
+nohup mvn package > results/maven.log 2>&1
+cp target/*-jar-with-dependencies.jar results/uberjar.jar
 rm -rf target
+echo "Compiled. Trying to run"
 
-echo "storm<0.9.0-wip7> jar RELEASE/uberjar.jar <MainClass> <arg1, args2,...>"
+storm-0.8.1/bin/storm jar results/uberjar.jar distributedRedditAnalyser.Main $@
